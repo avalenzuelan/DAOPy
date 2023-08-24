@@ -1,11 +1,12 @@
 from modules import OPTFiles, FitsImage, DaophotExecution
 
-path_to_chip='/../Artificial_Stars_experiments/Data/NPL058/c4'
+path_to_chip='../Data/NPL054/c1'
 
 print('Hello! Welcome to the Python wrapper for DAOPHOT')
-print('Long Exposure photometry for NPL058 field, chip 4')
+print('Long Exposure photometry for NPL054 field, chip 1')
 
-opt_files = OPTFiles('opt_files_long_exps.json')
+opt_files = OPTFiles(path_to_folder = path_to_chip,
+                     filename = 'opt_files_long_exps.json')
 print('--- Creating long opt files ...')
 
 opt_files.params = 'daophot', 'th', 5 #Change the threshold to detect only "good" stars
@@ -13,11 +14,11 @@ opt_files.create_opt_files(path_to_opts=path_to_chip)
 print('Done!')
 print('--- Opening .fits files ...')
 
-filename_npl058_Ks_long = 'NPL058_Ks_160s_c4.fits'
-filename_npl058_Ks_short = 'NPL058_Ks_10s_c4.fits'
+filename_npl058_Ks_long = 'NPL054_Ks_160s_c1.fits'
+filename_npl058_Ks_short = 'NPL054_Ks_10s_c1.fits'
 
-filename_npl058_H_long = 'NPL058_H_480s_c4.fits'
-filename_npl058_H_short = 'NPL058_Ks_10s_c4.fits'
+filename_npl058_H_long = 'NPL054_H_480s_c1.fits'
+filename_npl058_H_short = 'NPL054_Ks_10s_c1.fits'
 
 npl058_Ks_long = FitsImage(path_to_folder=path_to_chip,
                            fits_filename=filename_npl058_Ks_long,

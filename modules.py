@@ -69,9 +69,12 @@ class OPTFiles():
     to use DAOPHOT, ALLSTAR and ALLFRAME. The parameters are read from a 
     .json file, and can be editted later with the setter method .params """
 
-    def __init__(self, path_to_json) -> None:
-        self.json_path = path_to_json
-        self._params = self._open_json(path_to_json)
+    def __init__(self, path_to_folder, filename) -> None:
+        self.path_to_folder = path_to_folder
+        self.filename = filename
+        self.json_path = os.path.join(self.path_to_folder, 
+                                      self.filename)
+        self._params = self._open_json(self.json_path)
 
     def _open_json(self, path_to_json):
         with open(path_to_json, 'r') as f:

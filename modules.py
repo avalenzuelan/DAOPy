@@ -134,7 +134,7 @@ class DaophotExecution():
                  niter_psf=2
                  ):
         
-        self.filename = filename
+        self.filename = filename #create a setter for this
         self.path_to_folder = path_to_folder
         self.summed = summed
         self.averaged = averaged
@@ -163,7 +163,7 @@ class DaophotExecution():
             str(self.averaged) + '\n\n'+filename_ow+'y\n'
         return True
 
-    def aperture_phot(self, delete=True, filename_ow='x.ap'):
+    def aperture_phot(self, delete=True, filename_ow='x.ap'): #ow stands for overwrite
         if delete:
             self.remove_files('.ap')
             self.calling_sequence += 'phot\n\n\n\n\n'
@@ -181,12 +181,31 @@ class DaophotExecution():
             str(lim_mag) + '\n' + filename_ow + '\n'
         return True
     
-    def psf_model(self, delete=True, filename_ow='x.psf'):
+    def psf_model(self, 
+                  ap_name = None,
+                  lst_name = None,
+                  psf_name = None,
+                  nei_name = None,
+                  delete=True, 
+                  filename_ow='x.psf'):
+        if ap_name is None:
+            ap_name = self.filename + '.ap'
+        if lst_name is None:
+            lst_name = self.filename + '.lst'
+        if psf_name is None:
+            psf_name = self.filename + '.psf'
+        if nei_name is None:
+            nei_name = self.filename + '.nei'
+
         if delete:
             self.remove_files('.psf')
-            self.calling_sequence += 'psf\n\n\n\n'
+            self.calling_sequence += 'psf\n' + ap_name + '\n' + lst_name + \
+                '\n' + psf_name +'\n' + nei_name + '\n'
+            print(self.calling_sequence)
         else:
-            self.calling_sequence += 'psf\n\n\n\n' + filename_ow + '\n'
+            self.calling_sequence += 'psf\n' + ap_name + '\n' + lst_name + \
+                '\n' + psf_name + '\n' + nei_name + '\n'
+            print(self.calling_sequence)
         return True
 
     def substar(self, delete=True, filename_ow='xs.fits'):
@@ -201,8 +220,12 @@ class DaophotExecution():
     
     def iter_psf(self, delete=True, filename_ow='x.psf'):
         """ 
-         
+        This routine executes the PSF routine iteratively, using the .nei file
+        as input for the PSF routine. It is useful to improve the PSF model
+        iteratively in crowded fields. 
         """
+        #TBD
+
         return
     
     def execute(self):
@@ -221,5 +244,65 @@ class DaophotExecution():
 
 class AllstarExecution():
 
-    def __init__(self):
-        pass
+    def __init__(self, 
+                 path_to_folder, 
+                 filename,
+                 ):
+        
+        self.filename = filename
+        self.path_to_folder = path_to_folder
+        self.mycwd = os.getcwd()
+        self.calling_sequence = ''
+        self.old_calling_sequence = []
+    
+        
+    def execute(self):
+        """ Execute ALLSTAR command sequence
+
+        Routine that execute all commands previously stacked, and resets the
+        calling sequence to an empty string.
+        """
+        os.chdir(self.path_to_folder)
+        self.calling_sequence = 'allstar << EOF\n' + self.calling_sequence +\
+                                ' EOF'
+        os.system(self.calling_sequence)
+        self.old_calling_sequence.append(self.calling_sequence)
+        self.calling_sequence = ''
+        os.chdir(self.mycwd)
+        return
+
+class AllframeExecution():
+
+    def __init__(self, 
+                 path_to_folder, 
+                 filename,
+                 ):
+        
+        self.filename = filename
+        self.path_to_folder = path_to_folder
+        self.mycwd = os.getcwd()
+        self.calling_sequence = ''
+        self.old_calling_sequence = []
+
+    def daomatch(self, delete=True, filename_ow='x.mch'):
+        if delete:
+            self.remove_files('.mch')
+            self.calling_sequence += 'daomatch\n\n\n\n\n'
+        else:
+            self.calling_sequence += 'daomatch\n\n\n\n' + filename_ow + '\n'
+        return True
+        
+    def execute(self):
+        """ Execute ALLFRAME command sequence
+
+        Routine that execute all commands previously stacked, and resets the
+        calling sequence to an empty string.
+        """
+        os.chdir(self.path_to_folder)
+        self.calling_sequence = 'allframe << EOF\n' + self.calling_sequence +\
+                                ' EOF'
+        os.system(self.calling_sequence)
+        self.old_calling_sequence.append(self.calling_sequence)
+        self.calling_sequence = ''
+        os.chdir(self.mycwd)
+        return

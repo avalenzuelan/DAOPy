@@ -1,2 +1,3 @@
 # __init__.py
-from .modules import FitsImage, OPTFiles, DaophotExecution
+from .modules import FitsImage, OPTFiles, DaophotExecution, \
+    AllstarExecution, AllframeExecution

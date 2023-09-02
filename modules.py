@@ -127,8 +127,8 @@ class DaophotExecution():
     """
 
     def __init__(self, 
-                 path_to_folder, 
-                 filename, 
+                 path_to_folder : str, 
+                 filename : str, 
                  summed=1, 
                  averaged=1,
                  niter_psf=2
@@ -186,8 +186,8 @@ class DaophotExecution():
                   lst_name = None,
                   psf_name = None,
                   nei_name = None,
-                  delete=True, 
-                  filename_ow='x.psf'):
+                  delete=True):
+        
         if ap_name is None:
             ap_name = self.filename + '.ap'
         if lst_name is None:
@@ -206,6 +206,7 @@ class DaophotExecution():
             self.calling_sequence += 'psf\n' + ap_name + '\n' + lst_name + \
                 '\n' + psf_name + '\n' + nei_name + '\n'
             print(self.calling_sequence)
+
         return True
 
     def substar(self, delete=True, filename_ow='xs.fits'):
@@ -216,16 +217,6 @@ class DaophotExecution():
         else:
             self.calling_sequence += 'substar\n\n' + self.filename + \
             '.nei\ny\n\n' + filename_ow  +'\n'
-        return
-    
-    def iter_psf(self, delete=True, filename_ow='x.psf'):
-        """ 
-        This routine executes the PSF routine iteratively, using the .nei file
-        as input for the PSF routine. It is useful to improve the PSF model
-        iteratively in crowded fields. 
-        """
-        #TBD
-
         return
     
     def execute(self):
@@ -241,6 +232,7 @@ class DaophotExecution():
         self.old_calling_sequence.append(self.calling_sequence)
         self.calling_sequence = ''
         os.chdir(self.mycwd)
+        return
 
 class AllstarExecution():
 
@@ -254,7 +246,40 @@ class AllstarExecution():
         self.mycwd = os.getcwd()
         self.calling_sequence = ''
         self.old_calling_sequence = []
+
+    def remove_files(self, extention):
+        os.chdir(self.path_to_folder)
+        os.system('rm ' + self.filename + extention)
+        os.chdir(self.mycwd)
+        return True
     
+    def allstar(self,
+                in_fits_name = None,
+                psf_name = None,
+                ap_name = None,
+                als_name = None,
+                sub_fits_name = None,
+                delete = True):
+        
+        if in_fits_name is None:
+            in_fits_name = self.filename
+        if psf_name is None:
+            psf_name = self.filename + '.psf'
+        if ap_name is None:
+            ap_name = self.filename + '.ap'
+        if als_name is None:
+            als_name = self.filename + '.als'
+        if sub_fits_name is None:
+            sub_fits_name = self.filename + 's.fits'
+
+        if delete:
+            self.remove_files('.als')
+            self.calling_sequence += '\n' + in_fits_name + '\n' + psf_name + '\n' \
+                + ap_name + '\n' + als_name + '\n' + sub_fits_name + '\n'
+        else:
+            self.calling_sequence += '\n' + in_fits_name + '\n' + psf_name + '\n' \
+                + ap_name + '\n' + als_name + '\n\n' + sub_fits_name + '\n\n'
+        return
         
     def execute(self):
         """ Execute ALLSTAR command sequence
@@ -266,43 +291,69 @@ class AllstarExecution():
         self.calling_sequence = 'allstar << EOF\n' + self.calling_sequence +\
                                 ' EOF'
         os.system(self.calling_sequence)
+        print(self.calling_sequence)
         self.old_calling_sequence.append(self.calling_sequence)
         self.calling_sequence = ''
         os.chdir(self.mycwd)
         return
 
-class AllframeExecution():
+class DaomatchExecution():
 
     def __init__(self, 
-                 path_to_folder, 
-                 filename,
+                 path_to_folder : str, 
+                 master_filename : str,
+                 list_of_filenames : list
                  ):
         
-        self.filename = filename
         self.path_to_folder = path_to_folder
+        self.master_filename = master_filename
+        self.list_of_filenames = list_of_filenames
+        self.str_of_filenames = '\n'.join(self.list_of_filenames)
         self.mycwd = os.getcwd()
         self.calling_sequence = ''
         self.old_calling_sequence = []
 
-    def daomatch(self, delete=True, filename_ow='x.mch'):
+    def remove_files(self, extention, filename=None):
+        if filename is None:
+            filename = self.master_filename
+        os.chdir(self.path_to_folder)
+        os.system('rm ' + filename + extention)
+        os.chdir(self.mycwd)
+        return True
+
+    def daomatch(self, delete=True, mch_name=None):
+        if mch_name is None:
+            mch_name = self.master_filename + '.mch'
         if delete:
-            self.remove_files('.mch')
-            self.calling_sequence += 'daomatch\n\n\n\n\n'
+            self.remove_files('.mch', filename=mch_name)
+            self.calling_sequence += self.master_filename + '\n' + \
+                mch_name + '\n' + self.str_of_filenames + '\n'
         else:
-            self.calling_sequence += 'daomatch\n\n\n\n' + filename_ow + '\n'
+            self.calling_sequence += self.master_filename + '\n' + \
+                mch_name + '\n\n' + self.str_of_filenames + '\n'
         return True
         
     def execute(self):
-        """ Execute ALLFRAME command sequence
+        """ Execute DAOMATCH command sequence
 
         Routine that execute all commands previously stacked, and resets the
         calling sequence to an empty string.
         """
         os.chdir(self.path_to_folder)
-        self.calling_sequence = 'allframe << EOF\n' + self.calling_sequence +\
+        self.calling_sequence = 'daomatch << EOF\n' + self.calling_sequence +\
                                 ' EOF'
         os.system(self.calling_sequence)
         self.old_calling_sequence.append(self.calling_sequence)
         self.calling_sequence = ''
         os.chdir(self.mycwd)
         return
+    
+class DaomasterExecution():
+
+    def __init__():
+        pass
+
+class AllframeExecution():
+
+    def __init__():
+        pass

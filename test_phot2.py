@@ -60,7 +60,7 @@ daophot_Ks_long = DaophotExecution(path_to_folder=path_to_chip,
                                    niter_psf=2)
 daophot_Ks_long.attach_image(daophot_Ks_long.filename)
 daophot_Ks_long.psf_model()
-daophot_Ks_long.substar() #For now, I'll skip this step and go straight to ALLSTAR
+daophot_Ks_long.substar()
 daophot_Ks_long.execute()
 
 #making 2nd psf model
@@ -79,16 +79,28 @@ daophot_H_long = DaophotExecution(path_to_folder=path_to_chip,
                                    summed=16,
                                    averaged=3,
                                    niter_psf=3)
+daophot_H_long.attach_image(daophot_H_long.filename)
+daophot_H_long.psf_model()
+daophot_H_long.substar()
+daophot_H_long.execute()
+
+#making 2nd psf model
+daophot_H_long.attach_image(daophot_H_long.filename + 's')
+daophot_H_long.psf_model(delete=False,
+                        ap_name=daophot_H_long.filename + '.ap',
+                        psf_name=daophot_H_long.filename + 's.psf',
+                        nei_name=daophot_H_long.filename + 's.nei')
+daophot_H_long.execute()
 
 print('Done!')
 
 
 #------------------------------ Short Phot -------------------------------------
 #changing the opt files for short exposures
-# opt_files_short = OPTFiles(path_to_folder = path_to_chip,
-#                      filename = 'opt_files_short_exps.json')
-# opt_files_short.params = 'daophot', 'th', 1
-# opt_files_short.create_opt_files(path_to_opts=path_to_chip)
+opt_files_short = OPTFiles(path_to_folder = path_to_chip,
+                     filename = 'opt_files_short_exps.json')
+opt_files_short.params = 'daophot', 'th', 1
+opt_files_short.create_opt_files(path_to_opts=path_to_chip)
 
 print('Executing DAOPHOT for %s ...' %npl054_Ks_short.filename)
 
@@ -97,6 +109,19 @@ daophot_Ks_short = DaophotExecution(path_to_folder=path_to_chip,
                                    summed=5,
                                    averaged=1,
                                    niter_psf=2)
+
+daophot_Ks_short.attach_image(daophot_Ks_short.filename)
+daophot_Ks_short.psf_model()
+daophot_Ks_short.substar()
+daophot_Ks_short.execute()
+
+#making 2nd psf model
+daophot_Ks_short.attach_image(daophot_Ks_short.filename + 's')
+daophot_Ks_short.psf_model(delete=False,
+                        ap_name=daophot_Ks_short.filename + '.ap',
+                        psf_name=daophot_Ks_short.filename + 's.psf',
+                        nei_name=daophot_Ks_short.filename + 's.nei')
+daophot_Ks_short.execute()
 
 print('Done!')
 
@@ -107,6 +132,18 @@ daophot_H_short = DaophotExecution(path_to_folder=path_to_chip,
                                    summed=5,
                                    averaged=1,
                                    niter_psf=3)
+daophot_H_short.attach_image(daophot_H_short.filename)
+daophot_H_short.psf_model()
+daophot_H_short.substar()
+daophot_H_short.execute()
+
+#making 2nd psf model
+daophot_H_short.attach_image(daophot_H_short.filename + 's')
+daophot_H_short.psf_model(delete=False,
+                        ap_name=daophot_H_short.filename + '.ap',
+                        psf_name=daophot_H_short.filename + 's.psf',
+                        nei_name=daophot_H_short.filename + 's.nei')
+daophot_H_short.execute()
 
 print('Done!')
 

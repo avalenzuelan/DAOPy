@@ -127,14 +127,14 @@ class DaophotExecution():
     """
 
     def __init__(self, 
-                 path_to_folder, 
-                 filename, 
+                 path_to_folder : str, 
+                 filename : str, 
                  summed=1, 
                  averaged=1,
                  niter_psf=2
                  ):
         
-        self.filename = filename
+        self.filename = filename #create a setter for this
         self.path_to_folder = path_to_folder
         self.summed = summed
         self.averaged = averaged
@@ -163,7 +163,7 @@ class DaophotExecution():
             str(self.averaged) + '\n\n'+filename_ow+'y\n'
         return True
 
-    def aperture_phot(self, delete=True, filename_ow='x.ap'):
+    def aperture_phot(self, delete=True, filename_ow='x.ap'): #ow stands for overwrite
         if delete:
             self.remove_files('.ap')
             self.calling_sequence += 'phot\n\n\n\n\n'
@@ -181,12 +181,32 @@ class DaophotExecution():
             str(lim_mag) + '\n' + filename_ow + '\n'
         return True
     
-    def psf_model(self, delete=True, filename_ow='x.psf'):
+    def psf_model(self, 
+                  ap_name = None,
+                  lst_name = None,
+                  psf_name = None,
+                  nei_name = None,
+                  delete=True):
+        
+        if ap_name is None:
+            ap_name = self.filename + '.ap'
+        if lst_name is None:
+            lst_name = self.filename + '.lst'
+        if psf_name is None:
+            psf_name = self.filename + '.psf'
+        if nei_name is None:
+            nei_name = self.filename + '.nei'
+
         if delete:
             self.remove_files('.psf')
-            self.calling_sequence += 'psf\n\n\n\n'
+            self.calling_sequence += 'psf\n' + ap_name + '\n' + lst_name + \
+                '\n' + psf_name +'\n' + nei_name + '\n'
+            print(self.calling_sequence)
         else:
-            self.calling_sequence += 'psf\n\n\n\n' + filename_ow + '\n'
+            self.calling_sequence += 'psf\n' + ap_name + '\n' + lst_name + \
+                '\n' + psf_name + '\n' + nei_name + '\n'
+            print(self.calling_sequence)
+
         return True
 
     def substar(self, delete=True, filename_ow='xs.fits'):
@@ -197,12 +217,6 @@ class DaophotExecution():
         else:
             self.calling_sequence += 'substar\n\n' + self.filename + \
             '.nei\ny\n\n' + filename_ow  +'\n'
-        return
-    
-    def iter_psf(self, delete=True, filename_ow='x.psf'):
-        """ 
-         
-        """
         return
     
     def execute(self):
@@ -218,8 +232,247 @@ class DaophotExecution():
         self.old_calling_sequence.append(self.calling_sequence)
         self.calling_sequence = ''
         os.chdir(self.mycwd)
+        return
 
 class AllstarExecution():
 
-    def __init__(self):
-        pass
+    def __init__(self, 
+                 path_to_folder, 
+                 filename,
+                 ):
+        
+        self.filename = filename
+        self.path_to_folder = path_to_folder
+        self.mycwd = os.getcwd()
+        self.calling_sequence = ''
+        self.old_calling_sequence = []
+
+    def remove_files(self, extention):
+        os.chdir(self.path_to_folder)
+        os.system('rm ' + self.filename + extention)
+        os.chdir(self.mycwd)
+        return True
+    
+    def allstar(self,
+                in_fits_name = None,
+                psf_name = None,
+                ap_name = None,
+                als_name = None,
+                sub_fits_name = None,
+                delete = True):
+        
+        if in_fits_name is None:
+            in_fits_name = self.filename
+        if psf_name is None:
+            psf_name = self.filename + '.psf'
+        if ap_name is None:
+            ap_name = self.filename + '.ap'
+        if als_name is None:
+            als_name = self.filename + '.als'
+        if sub_fits_name is None:
+            sub_fits_name = self.filename + 's.fits'
+
+        if delete:
+            self.remove_files('.als')
+            self.calling_sequence += '\n' + in_fits_name + '\n' + psf_name + '\n' \
+                + ap_name + '\n' + als_name + '\n' + sub_fits_name + '\n'
+        else:
+            self.calling_sequence += '\n' + in_fits_name + '\n' + psf_name + '\n' \
+                + ap_name + '\n' + als_name + '\n\n' + sub_fits_name + '\n\n'
+        return
+        
+    def execute(self):
+        """ Execute ALLSTAR command sequence
+
+        Routine that execute all commands previously stacked, and resets the
+        calling sequence to an empty string.
+        """
+        os.chdir(self.path_to_folder)
+        self.calling_sequence = 'allstar << EOF\n' + self.calling_sequence +\
+                                ' EOF'
+        os.system(self.calling_sequence)
+        print(self.calling_sequence)
+        self.old_calling_sequence.append(self.calling_sequence)
+        self.calling_sequence = ''
+        os.chdir(self.mycwd)
+        return
+
+class DaomatchExecution():
+
+    def __init__(self, 
+                 path_to_folder : str, 
+                 master_filename : str,
+                 list_of_filenames : list
+                 ):
+        
+        self.path_to_folder = path_to_folder
+        self.master_filename = master_filename
+        self.list_of_filenames = list_of_filenames
+        self.str_of_filenames = '\n'.join(self.list_of_filenames)
+        self.mycwd = os.getcwd()
+        self.calling_sequence = ''
+        self.old_calling_sequence = []
+
+    def remove_files(self, extention, filename=None):
+        if filename is None:
+            filename = self.master_filename
+        os.chdir(self.path_to_folder)
+        os.system('rm ' + filename + extention)
+        os.chdir(self.mycwd)
+        return True
+
+    def daomatch(self, delete=True, mch_name=None):
+        if mch_name is None:
+            mch_name = self.master_filename + '.mch'
+        if delete:
+            self.remove_files('.mch', filename=mch_name)
+            self.calling_sequence += self.master_filename + '\n' + \
+                mch_name + '\n' + self.str_of_filenames + '\n'
+        else:
+            self.calling_sequence += self.master_filename + '\n' + \
+                mch_name + '\n\n' + self.str_of_filenames + '\n'
+        return True
+        
+    def execute(self):
+        """ Execute DAOMATCH command sequence
+
+        Routine that execute all commands previously stacked, and resets the
+        calling sequence to an empty string.
+        """
+        os.chdir(self.path_to_folder)
+        self.calling_sequence = 'daomatch << EOF\n' + self.calling_sequence +\
+                                ' EOF\n'
+        os.system(self.calling_sequence)
+        self.old_calling_sequence.append(self.calling_sequence)
+        self.calling_sequence = ''
+        os.chdir(self.mycwd)
+        return
+    
+class DaomasterExecution():
+
+    def __init__(self,
+                 path_to_folder : str, 
+                 mch_filename : str,
+                 n_files : int
+                 ):
+        
+        self.path_to_folder = path_to_folder
+        self.mch_filename = mch_filename
+        self.n_files = n_files
+        self.mycwd = os.getcwd()
+        self.calling_sequence = ''
+        self.old_calling_sequence = []
+
+    def remove_files(self, extention, filename=None):
+        if filename is None:
+            filename = self.mch_filename
+        os.chdir(self.path_to_folder)
+        os.system('rm ' + filename + extention)
+        os.chdir(self.mycwd)
+        return True
+
+    def daomaster(self, delete=True, 
+                  mch_name=None,
+                  min_frac_enough=None,
+                  max_sigma=None,
+                  transform=None,
+                  ):
+        
+        if mch_name is None:
+            mch_name = self.mch_filename
+        if min_frac_enough is None:
+            min_frac_enough = '1,1,1'
+        if max_sigma is None:
+            max_sigma = '3'
+        if transform is None:
+            transform = '4'
+        
+        if delete:
+            self.remove_files('.mag', filename=mch_name)
+            self.remove_files('.cor', filename=mch_name)
+            self.remove_files('.tfr', filename=mch_name)
+            self.remove_files('.raw', filename=mch_name)
+            self.calling_sequence += mch_name + '\n' + \
+                min_frac_enough +'\n'+ \
+                max_sigma + '\n' + \
+                transform + '\n' + \
+                '10' + self.n_files*'\n' + \
+                '9\n8\n8\n7\n7\n6\n6\n5\n5\n4\n4\n3\n3\n2\n2\n1\n1\n1\n1\n0\n' + \
+                'y\n' + \
+                'y\n\n' + \
+                'y\n\n' + \
+                'y\n\n' + \
+                'y\n\n\n' + \
+                'y\n\n' + \
+                'y\n' + (self.n_files + 1)*'\n' + \
+                'y\n'
+        return
+    
+    def execute(self):
+        """ Execute DAOMASTER command sequence
+
+        Routine that execute all commands previously stacked, and resets the
+        calling sequence to an empty string.
+        """
+        os.chdir(self.path_to_folder)
+        self.calling_sequence = 'daomaster << EOF\n' + self.calling_sequence +\
+                                'EOF\n'
+        os.system(self.calling_sequence)
+        self.old_calling_sequence.append(self.calling_sequence)
+        self.calling_sequence = ''
+        os.chdir(self.mycwd)
+        return
+
+class AllframeExecution():
+
+    def __init__(self,
+                 path_to_folder : str,
+                 mch_filename : str,
+                 mag_filename : str):
+        
+        self.path_to_folder = path_to_folder
+        self.mch_filename = mch_filename
+        self.mag_filename = mag_filename
+        self.mycwd = os.getcwd()
+        self.calling_sequence = ''
+        self.old_calling_sequence = []
+
+    def remove_files(self, extention, filename=None, all_ext=False):
+        if not all_ext:
+            if filename is None:
+                filename = self.mch_filename
+            os.chdir(self.path_to_folder)
+            os.system('rm ' + filename + extention)
+            os.chdir(self.mycwd)
+            return True
+        elif all_ext:
+            os.chdir(self.path_to_folder)
+            os.system('rm *' + extention)
+            os.chdir(self.mycwd)
+            return True
+
+    def allframe(self, delete=True, mch_name=None, mag_name=None):
+        if mch_name is None:
+            mch_name = self.mch_filename + '.mch'
+        if mag_name is None:
+            mag_name = self.mag_filename + '.mag'
+        if delete:
+            self.remove_files('.alf', all_ext=True)
+            self.calling_sequence += '\n' + mch_name + '\n' + \
+                mag_name + '\n'
+        return
+    
+    def execute(self):
+        """ Execute ALLFRAME command sequence
+
+        Routine that execute all commands previously stacked, and resets the
+        calling sequence to an empty string.
+        """
+        os.chdir(self.path_to_folder)
+        self.calling_sequence = 'allframe << EOF\n' + self.calling_sequence +\
+                                'EOF\n'
+        os.system(self.calling_sequence)
+        self.old_calling_sequence.append(self.calling_sequence)
+        self.calling_sequence = ''
+        os.chdir(self.mycwd)
+        return

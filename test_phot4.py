@@ -51,8 +51,8 @@ npl054_H_short = FitsImage(path_to_folder=path_to_chip,
                            filter='H')
 
 print('Done!')
-# ------------------------------ Long phot -------------------------------------
-print('Executing DAOPHOT for %s ...' %npl054_Ks_long.filename)
+# ------------------------------ DAOMATCH -------------------------------------
+print('Executing DAOMATCH')
 
 daomatch_npl054_c1 = DaomatchExecution(path_to_folder=path_to_chip,
                                      master_filename=npl054_Ks_long.filename,
@@ -61,7 +61,33 @@ daomatch_npl054_c1 = DaomatchExecution(path_to_folder=path_to_chip,
                                             npl054_Ks_short.filename,
                                             npl054_H_short.filename,
                                      ])
-
-
+daomatch_npl054_c1.daomatch(mch_name='NPL054_c1')
+daomatch_npl054_c1.execute()
 print('Done!')
 
+# ------------------------------ DAOMASTER -------------------------------------
+
+print('Executing DAOMASTER')
+
+daomaster_npl054_c1 = DaomasterExecution(path_to_folder=path_to_chip,
+                                         mch_filename='NPL054_c1',
+                                         n_files=4)
+
+daomaster_npl054_c1.daomaster()
+daomaster_npl054_c1.execute()
+
+
+# ------------------------------ ALLFRAME -------------------------------------
+
+print('Executing ALLFRAME')
+
+allframe_npl054_c1 = AllframeExecution(path_to_folder=path_to_chip,
+                                        mch_filename='NPL054_c1',
+                                        mag_filename='NPL054_c1',
+                                        )
+allframe_npl054_c1.allframe()
+allframe_npl054_c1.execute()
+print('Done!')
+
+#THE END
+                                       

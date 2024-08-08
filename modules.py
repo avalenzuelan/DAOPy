@@ -14,8 +14,14 @@ import os
 
 class FitsImage():
 
-    def __init__(self, path_to_folder, fits_filename, extension = 0,
-                 field_name=None, texp=None, chip=None, filter=None) -> None:
+    def __init__(self, 
+                 path_to_folder, 
+                 fits_filename, 
+                 extension = 0,
+                 field_name=None, 
+                 texp=None, 
+                 chip=None, 
+                 filter=None):
         
         self.fits_filename = fits_filename
         self.filename = self.fits_filename.split('.')[0]
@@ -89,6 +95,7 @@ class OPTFiles():
     def params(self, args):
         opt, key, value = args
         self._params[opt][key] = value
+        return True
 
     def create_opt_files(self, path_to_opts = '.'):
         for opt_filename, opt_params in self.params.items():
@@ -131,19 +138,19 @@ class DaophotExecution():
                  filename : str, 
                  summed=1, 
                  averaged=1,
-                 niter_psf=2
                  ):
         
         self.filename = filename #create a setter for this
         self.path_to_folder = path_to_folder
         self.summed = summed
         self.averaged = averaged
-        self.niter_psf = niter_psf
         self.mycwd = os.getcwd()
         self.calling_sequence = ''
         self.old_calling_sequence = []
 
-    def attach_image(self, filename):
+    def attach_image(self, filename=None):
+        if filename is None:
+            filename = self.filename
         self.calling_sequence += 'at ' + filename + '\n'
         return True
     
@@ -160,10 +167,17 @@ class DaophotExecution():
             str(self.averaged) + '\n\ny\n'
         else:
             self.calling_sequence += 'find\n' + str(self.summed) + ',' + \
-            str(self.averaged) + '\n\n'+filename_ow+'y\n'
+            str(self.averaged) + '\n\n'+filename_ow+'\ny\n'
         return True
 
-    def aperture_phot(self, delete=True, filename_ow='x.ap'): #ow stands for overwrite
+    def aperture_phot(self, 
+                      delete=True, 
+                      filename_ow='x.ap'): #ow stands for overwrite
+        if self.filename + '.psf' in os.listdir(self.path_to_folder):
+            print('[WARNING] PSF file already exists.')
+            print('[WARNING] Move or delete the  %s file before continue.' %\
+                  (self.filename + '.psf'))
+            return False
         if delete:
             self.remove_files('.ap')
             self.calling_sequence += 'phot\n\n\n\n\n'
@@ -178,7 +192,7 @@ class DaophotExecution():
             str(lim_mag) + '\n\n'
         else:
             self.calling_sequence += 'pick\n\n' + str(nstars) + ',' + \
-            str(lim_mag) + '\n' + filename_ow + '\n'
+            str(lim_mag) + '\n' + filename_ow + '\n\n'
         return True
     
     def psf_model(self, 
@@ -289,7 +303,7 @@ class AllstarExecution():
         """
         os.chdir(self.path_to_folder)
         self.calling_sequence = 'allstar << EOF\n' + self.calling_sequence +\
-                                ' EOF'
+                                'EOF'
         os.system(self.calling_sequence)
         print(self.calling_sequence)
         self.old_calling_sequence.append(self.calling_sequence)
@@ -376,16 +390,18 @@ class DaomasterExecution():
                   min_frac_enough=None,
                   max_sigma=None,
                   transform=None,
+                  new_ids=True,
+                  
                   ):
         
         if mch_name is None:
             mch_name = self.mch_filename
         if min_frac_enough is None:
-            min_frac_enough = '1,1,1'
+            min_frac_enough = '2,1,1' 
         if max_sigma is None:
-            max_sigma = '3'
+            max_sigma = '0.5' # Rodrigo's recommedation :)
         if transform is None:
-            transform = '4'
+            transform = '6'
         
         if delete:
             self.remove_files('.mag', filename=mch_name)
@@ -405,7 +421,7 @@ class DaomasterExecution():
                 'y\n\n\n' + \
                 'y\n\n' + \
                 'y\n' + (self.n_files + 1)*'\n' + \
-                'y\n'
+                'y\n' + (self.n_files + 1)*'\n'
         return
     
     def execute(self):

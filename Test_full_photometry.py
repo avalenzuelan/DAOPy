@@ -9,7 +9,7 @@ from modules import OPTFiles, FitsImage, DaophotExecution, DaomasterExecution,\
 def pause():
     programPause = input("Press the <ENTER> key to continue...")
 
-path_to_chip='../Data/NPL058/c1'
+path_to_chip='../Data/NPL058/c1/maxsig-0.5_minframes_2'
 
 print('Hello! Welcome to the Python wrapper for DAOPHOT')
 print('Photometry for NPL058 field, chip 1')
@@ -51,8 +51,7 @@ print('Executing DAOPHOT for %s ...' %npl058_Ks_long.filename)
 daophot_Ks_long = DaophotExecution(path_to_folder=path_to_chip,
                                    filename=npl058_Ks_long.filename,
                                    summed=8,
-                                   averaged=2,
-                                   niter_psf=2)
+                                   averaged=2)
 daophot_Ks_long.attach_image(daophot_Ks_long.filename)
 daophot_Ks_long.find_stars()
 daophot_Ks_long.aperture_phot()
@@ -65,8 +64,7 @@ print('Executing DAOPHOT for %s ...' %npl058_H_long.filename)
 daophot_H_long = DaophotExecution(path_to_folder=path_to_chip,
                                    filename=npl058_H_long.filename,
                                    summed=16,
-                                   averaged=3,
-                                   niter_psf=3)
+                                   averaged=3)
 daophot_H_long.attach_image(daophot_H_long.filename)
 daophot_H_long.find_stars()
 daophot_H_long.aperture_phot()

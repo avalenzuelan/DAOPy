@@ -35,6 +35,16 @@ class FitsImage():
         self._ron = self._get_ron()
         self._gain = self._get_gain()
 
+    def __add__(self, other):
+        if self.data.shape != other.data.shape:
+            print('[ERROR] The images do not have the same shape.\n' +\
+                  'Image 1: %s\n' % str(self.data.shape) +\
+                  'Image 2: %s\n' % str(other.data.shape)
+                  )
+            return False
+        else:
+            return self.data + other.data
+
     def _open_data(self, path_to_fits, ext = 0):
         print('--- Opening %s' % path_to_fits)
         hdulist = fits.open(path_to_fits)
@@ -49,6 +59,10 @@ class FitsImage():
     
     def _get_gain(self):
         return self.header['GAIN']
+    
+    @property
+    def shape(self):
+        return self.data.shape
     
     @property
     def ron(self):
@@ -171,12 +185,16 @@ class DaophotExecution():
         return True
 
     def aperture_phot(self, 
-                      delete=True, 
+                      delete: bool = True,
+                      rm_psf: bool = False, 
                       filename_ow='x.ap'): #ow stands for overwrite
         if self.filename + '.psf' in os.listdir(self.path_to_folder):
             print('[WARNING] PSF file already exists.')
             print('[WARNING] Move or delete the  %s file before continue.' %\
                   (self.filename + '.psf'))
+            if rm_psf:
+                self.remove_files('.psf')
+                print('[INFO] %s file removed.' % (self.filename + '.psf'))
             return False
         if delete:
             self.remove_files('.ap')
@@ -341,10 +359,10 @@ class DaomatchExecution():
         if delete:
             self.remove_files('.mch', filename=mch_name)
             self.calling_sequence += self.master_filename + '\n' + \
-                mch_name + '\n' + self.str_of_filenames + '\n'
+                mch_name + '\n' + self.str_of_filenames + '\n\n'
         else:
             self.calling_sequence += self.master_filename + '\n' + \
-                mch_name + '\n\n' + self.str_of_filenames + '\n'
+                mch_name + '\n\n' + self.str_of_filenames + '\n\n'
         return True
         
     def execute(self):
@@ -355,7 +373,7 @@ class DaomatchExecution():
         """
         os.chdir(self.path_to_folder)
         self.calling_sequence = 'daomatch << EOF\n' + self.calling_sequence +\
-                                ' EOF\n'
+                                '\n'
         os.system(self.calling_sequence)
         self.old_calling_sequence.append(self.calling_sequence)
         self.calling_sequence = ''
@@ -390,8 +408,14 @@ class DaomasterExecution():
                   min_frac_enough=None,
                   max_sigma=None,
                   transform=None,
-                  new_ids=True,
-                  
+                  new_ids: bool = False,
+                  mag_file : bool = False,
+                  cor_file : bool = False,
+                  raw_file : bool = False,
+                  new_mch_file : bool = False,
+                  tfr_file : bool = False,
+                  new_coo_files : bool = False,
+                  mtr_files : bool = False
                   ):
         
         if mch_name is None:
@@ -402,7 +426,55 @@ class DaomasterExecution():
             max_sigma = '0.5' # Rodrigo's recommedation :)
         if transform is None:
             transform = '6'
+
+        # Assign new IDs?
+        if new_ids:
+            new_ids_str = 'y\n'
+        else:
+            new_ids_str = 'n\n'
+
+        # Create .mag file?
+        if mag_file:
+            mean_mags_str = 'y\n\n'
+        else:
+            mean_mags_str = 'n\n'
+
+        # Create .cor file?
+        if cor_file:
+            cor_file_str = 'y\n\n'
+        else:
+            cor_file_str = 'n\n'
+
+        # Create .raw file?
+        if raw_file:
+            raw_file_str = 'y\n\n'
+        else:
+            raw_file_str = 'n\n'
         
+        # Create new .mch file?
+        if new_mch_file:
+            new_mch_str = 'y\n\n\n'
+        else:
+            new_mch_str = 'n\n'
+
+        # Create .tfr file? Transfer table
+        if tfr_file:
+            tfr_file_str = 'y\n\n'
+        else:
+            tfr_file_str = 'n\n'
+
+        # Create new .coo files?
+        if new_coo_files:
+            new_coo_str = 'y\n' + (self.n_files + 1)*'\n'
+        else:
+            new_coo_str = 'n\n'
+        
+        # Create .mtr files? Transfer stars IDs
+        if mtr_files:
+            mtr_file_str = 'y\n' + (self.n_files + 1)*'\n'
+        else:
+            mtr_file_str = 'n\n'
+
         if delete:
             self.remove_files('.mag', filename=mch_name)
             self.remove_files('.cor', filename=mch_name)
@@ -414,14 +486,14 @@ class DaomasterExecution():
                 transform + '\n' + \
                 '10' + self.n_files*'\n' + \
                 '9\n8\n8\n7\n7\n6\n6\n5\n5\n4\n4\n3\n3\n2\n2\n1\n1\n1\n1\n0\n' + \
-                'y\n' + \
-                'y\n\n' + \
-                'y\n\n' + \
-                'y\n\n' + \
-                'y\n\n\n' + \
-                'y\n\n' + \
-                'y\n' + (self.n_files + 1)*'\n' + \
-                'y\n' + (self.n_files + 1)*'\n'
+                new_ids_str + \
+                mean_mags_str + \
+                cor_file_str + \
+                raw_file_str + \
+                new_mch_str + \
+                tfr_file_str + \
+                new_coo_str + \
+                mtr_file_str
         return
     
     def execute(self):
@@ -492,3 +564,60 @@ class AllframeExecution():
         self.calling_sequence = ''
         os.chdir(self.mycwd)
         return
+    
+class Montage2Execution():
+
+    def __init__(self,
+                 path_to_folder : str):
+        
+        self.path_to_folder = path_to_folder
+        self.mycwd = os.getcwd()
+        self.calling_sequence = ''
+        self.old_calling_sequence = []
+
+    def montage2(self,
+                 xlim : list | str | tuple,
+                 ylim : list | str | tuple,
+                 mch_name : str,
+                 im_suffix : str = None,
+                 min_frames : int = 1,
+                 percentile : float = 50,
+                 exp_factor : float = 1.0,
+                 sky_from_overlap : bool = True,
+                 output_filename : str = None,
+                 ):
+        
+        #check how is the input written for xlim, ylim
+        ...
+
+        if im_suffix is None:
+            im_suffix = ''
+        if output_filename is None:
+            output_filename = mch_name
+
+        if sky_from_overlap:
+            str_sky = 'y'
+        else:
+            str_sky = 'n'
+
+        str_xlim = str(xlim[0]) + ', ' + str(xlim[1])
+        str_ylim = str(ylim[0]) + ', ' + str(ylim[1])
+        print(xlim, ylim)
+        print(str_xlim, str_ylim)
+        self.calling_sequence += mch_name + '.mch\n' +\
+                                 im_suffix + '\n' +\
+                                 str(min_frames) + ',' + str(percentile) +'\n' +\
+                                 str_xlim + '\n' +\
+                                 str_ylim + '\n' + \
+                                 str(exp_factor) + '\n' +\
+                                 str_sky + '\n' +\
+                                 output_filename + '\n'
+        os.chdir(self.path_to_folder)
+        self.calling_sequence = 'montage2 << EOF\n' + self.calling_sequence +\
+                                 'EOF\n'
+        print(self.calling_sequence)
+        os.system(self.calling_sequence)
+        self.old_calling_sequence.append(self.calling_sequence)
+        self.calling_sequence = ''
+        os.chdir(self.mycwd)
+        return True
